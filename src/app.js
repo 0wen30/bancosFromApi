@@ -1,79 +1,74 @@
-const filtrarDatos = (bancos, pagina = 1, cantidad = 10) => {
-   return bancos.filter(({ code, name, country }, index) => {
-      return index < cantidad * pagina && index >= cantidad * (pagina - 1);
-   });
-}
+export class App{
 
-const eliminaHijos = (parent,child = null) => {
-	if (!child) {
-		while (parent.firstChild) {
-	      parent.removeChild(parent.firstChild);
-	   }
-	}else{
-		parent.removeChild(child);
+	constructor(){
+		this.thead = document.createElement("thead");
+		this.tabla = document.createElement("table");
+		this.tbody = document.createElement("tbody");
+		this.ascendente = true;
+		this.bancos = [];
 	}
-}
 
-let ascendente = true;
+	agregarEventos(){
+		["code","name","country"].forEach((head)=>{
+	   	const th = document.createElement("th");
+	   	th.textContent = head;
+	   	const cuerpo = this.tbody;
+	   	th.addEventListener("click",()=>{
+	   		this.aplicarFiltros(head);
+	   	})
+	   	this.thead.appendChild(th);
+	   });
+	}
 
-const ordenarDatos = (bancos,orden) => {
-	const datosOrdenados = bancos.sort((a,b)=>{
-   	if (a[orden] > b[orden]) return ascendente ? -1 : 1;
-		if (a[orden] < b[orden]) return ascendente ? 1 : -1;
-		return 0;
-   });
-   ascendente = !ascendente;
-   return datosOrdenados;
-}
+	filtrarDatos(bancosOrdenados,pagina = 1, cantidad = 25){
+	   return bancosOrdenados.filter(({ code, name, country }, index) => {
+	      return index < cantidad * pagina && index >= cantidad * (pagina - 1);
+	   });
+	}
 
-const aplicarFiltros = (bancos,head = "name") => {
-	let tbody = document.createElement("tbody");
-	let bancosOrdenados = ordenarDatos(bancos,head);
-   let bancosFiltrados = filtrarDatos(bancosOrdenados);
-   bancosFiltrados.forEach(({ code, name, country }) => {
-      tbody.innerHTML += `<tr><td>${code}</td><td>${name}</td><td>${country}</td></td>`;
-   });
-   return tbody;
-}
+	ordenarDatos(orden){
+		const datosOrdenados = this.bancos.sort((a,b)=>{
+	   	if (a[orden] > b[orden]) return this.ascendente ? -1 : 1;
+			if (a[orden] < b[orden]) return this.ascendente ? 1 : -1;
+			return 0;
+	   });
+	   this.ascendente = !this.ascendente;
+	   return datosOrdenados;
+	}
 
-const agregarEventos = (tabla,tbody,bancos) => {
-	const encabezados = document.createElement("thead");
-	["code","name","country"].forEach((head)=>{
-   	const th = document.createElement("th");
-   	th.textContent = head
-   	th.addEventListener("click",()=>{
-   		eliminaHijos(tabla,tbody)
-   		tbody = aplicarFiltros(bancos,head);
-   		tabla.appendChild(tbody);
-   	})
-   	encabezados.appendChild(th);
-   });
-   return encabezados;
-}
+	aplicarFiltros(head = "name"){
+		let bancosOrdenados = this.ordenarDatos(head);
+	   let bancosFiltrados = this.filtrarDatos(bancosOrdenados);
+	   this.tbody.innerHTML = "";
+	   bancosFiltrados.forEach(({ code, name, country }) => {
+	      this.tbody.innerHTML += `<tr><td>${code}</td><td>${name}</td><td>${country}</td></td>`;
+	   });
+	}
 
-const crearTabla = (bancos) => {
-	const tabla = document.createElement("table");
-   const tbody = aplicarFiltros(bancos);
- 	const thead = agregarEventos(tabla,tbody,bancos);
-   tabla.appendChild(thead);
-   tabla.appendChild(tbody);
-   return tabla;
-}
+	crearTabla(){
+	   this.aplicarFiltros();
+	 	this.agregarEventos();
+	   this.tabla.appendChild(this.thead);
+	   this.tabla.appendChild(this.tbody);
+	}
 
-const traerInfo = async () => {
-   const myInit = {
-      headers: {
-         "X-API-Key": "4H34kfiWPcySuqAWGburnHX53U44gazkbWUfC4mSG9axJ2jtQ0P3Edjgum84GsyJ",
-         "Accept": "application/json, text/plain, */*"
-      }
-   };
-   const respuesta = await fetch("https://banking.sandbox.prometeoapi.com/provider/", myInit);
-   const { providers } = await respuesta.json();
-   return providers;
-}
+	async traerInfo(){
+	   const myInit = {
+	      headers: {
+	         "X-API-Key": "4H34kfiWPcySuqAWGburnHX53U44gazkbWUfC4mSG9axJ2jtQ0P3Edjgum84GsyJ",
+	         "Accept": "application/json, text/plain, */*"
+	      }
+	   };
+	   const respuesta = await fetch("https://banking.sandbox.prometeoapi.com/provider/", myInit);
+	   await respuesta.json().then((res)=>{
+	   	this.bancos = res.providers;
+	   })
+	}
 
-export const main = async (app) => {
-   const bancos = await traerInfo();
-   const tabla = crearTabla(bancos);
-   app.appendChild(tabla);
+	async main(app){
+	   await this.traerInfo();
+	   this.crearTabla();
+	   app.appendChild(this.tabla);
+	}
+
 }

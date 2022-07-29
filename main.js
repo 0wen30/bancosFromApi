@@ -1,4 +1,6 @@
 import './style.css'
-import { main } from './src/app.js'
+import { App } from './src/app.js'
 
-main(document.querySelector('#app'));
+const app = new App();
+
+app.main(document.querySelector('#app'));
